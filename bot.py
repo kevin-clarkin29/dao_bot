@@ -1,19 +1,17 @@
 import discord
 import os
-import asyncio
 from dotenv import load_dotenv
 
-# Load environment variables from .env
+# Load environment variables from Railway
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+CURRENT_CHAPTER = int(os.getenv("CURRENT_CHAPTER", 1))
 
-# Load Dao De Jing chapters from a text file
+# Load chapters
 def load_chapters(filename="dao_de_jing.txt"):
     with open(filename, "r", encoding="utf-8") as f:
-        text = f.read()
-        # Use the literal string "\n\n" as a delimiter
-        return text.split("\\n\\n")  # Splitting on the literal "\n\n" string
+        return f.read().split("\\n\\n")
 
 chapters = load_chapters()
 
@@ -27,13 +25,14 @@ async def on_ready():
 
     if not channel:
         print("Error: Could not find channel.")
+        await client.close()
         return
 
-    for i, chapter in enumerate(chapters, start=1):
-        await channel.send(f"**Dao De Jing - Chapter {i}**\n{chapter}")
-        print(f"Posted Chapter {i}")
+    # Post the current chapter and shut down
+    if 1 <= CURRENT_CHAPTER <= len(chapters):
+        await channel.send(f"**Dao De Jing - Chapter {CURRENT_CHAPTER}**\n{chapters[CURRENT_CHAPTER - 1]}")
+        print(f"Posted Chapter {CURRENT_CHAPTER}")
 
-        if i < len(chapters):  # Wait 24 hours before posting next chapter
-            await asyncio.sleep(24 * 60 * 60)
+    await client.close()
 
 client.run(TOKEN)
