@@ -47,14 +47,29 @@ def update_env_variable(key, value):
     RAILWAY_API_TOKEN = os.getenv("RAILWAY_API_TOKEN")
 
     if RAILWAY_API_URL and RAILWAY_API_TOKEN:
-        headers = {"Authorization": f"Bearer {RAILWAY_API_TOKEN}", "Content-Type": "application/json"}
-        data = {"variables": {key: value}}
-        response = requests.patch(RAILWAY_API_URL, json=data, headers=headers)
+        headers = {
+            "Authorization": f"Bearer {RAILWAY_API_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        
+        data = {
+            "variables": [
+                {"key": key, "value": value}
+            ]
+        }
 
-        if response.status_code == 200:
-            print(f"Updated environment variable: {key} = {value}")
-        else:
-            print(f"Failed to update environment variable: {response.text}")
+        try:
+            response = requests.patch(f"{RAILWAY_API_URL}/variables", json=data, headers=headers)
+            
+            if response.status_code == 200:
+                print(f"✅ Updated environment variable: {key} = {value}")
+            else:
+                print(f"❌ Failed to update variable: {response.status_code} - {response.text}")
+
+        except requests.RequestException as e:
+            print(f"🚨 API Request Failed: {e}")
+    else:
+        print("❗ Environment variables for Railway API are missing.")
 
 
 client.run(TOKEN)
