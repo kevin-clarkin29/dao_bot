@@ -1,6 +1,7 @@
 import discord
 import os
 from dotenv import load_dotenv
+import requests
 
 # Load environment variables from Railway
 load_dotenv()
@@ -28,11 +29,32 @@ async def on_ready():
         await client.close()
         return
 
-    # Post the current chapter and shut down
+    # Post the current chapter
     if 1 <= CURRENT_CHAPTER <= len(chapters):
         await channel.send(f"**Dao De Jing - Chapter {CURRENT_CHAPTER}**\n{chapters[CURRENT_CHAPTER - 1]}")
         print(f"Posted Chapter {CURRENT_CHAPTER}")
 
+        # Increment CURRENT_CHAPTER using Railway API
+        new_chapter = CURRENT_CHAPTER + 1
+        update_env_variable("CURRENT_CHAPTER", str(new_chapter))
+
     await client.close()
+
+
+def update_env_variable(key, value):
+    """ Update Railway environment variable using Railway API """
+    RAILWAY_API_URL = os.getenv("RAILWAY_API_URL")
+    RAILWAY_API_TOKEN = os.getenv("RAILWAY_API_TOKEN")
+
+    if RAILWAY_API_URL and RAILWAY_API_TOKEN:
+        headers = {"Authorization": f"Bearer {RAILWAY_API_TOKEN}", "Content-Type": "application/json"}
+        data = {"variables": {key: value}}
+        response = requests.patch(RAILWAY_API_URL, json=data, headers=headers)
+
+        if response.status_code == 200:
+            print(f"Updated environment variable: {key} = {value}")
+        else:
+            print(f"Failed to update environment variable: {response.text}")
+
 
 client.run(TOKEN)
